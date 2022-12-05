@@ -54,7 +54,8 @@ func main() {
 		}
 	}
 
+	print("The answer is: ")
 	for _, s := range stack {
-		println(s)
+		print(string(s[len(s)-1]))
 	}
 }
