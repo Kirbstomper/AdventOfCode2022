@@ -23,10 +23,10 @@ func main() {
 
 	visited := make(map[pos]bool)
 
-	knot_pos := make([]pos, 10)
-	knot_pos_old := make([]pos, 10)
+	knots_num := 10
+	knot_pos := make([]pos, knots_num)
 
-	visited[knot_pos[9]] = true
+	visited[knot_pos[knots_num-1]] = true
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -34,7 +34,8 @@ func main() {
 		amount_moved, _ := strconv.Atoi(inst[1])
 
 		for amount_moved > 0 {
-			knot_pos_old[0] = knot_pos[0]
+
+			//Move the head
 			if "R" == inst[0] {
 				knot_pos[0].x++
 			}
@@ -48,45 +49,15 @@ func main() {
 				knot_pos[0].y--
 			}
 
-			//Calculate where the tail should be
-
 			//IF they are touching still, no move needed for tail
 			//Touching is left/right, up/down, diag, or overlapping
-			dir := inst[0]
-			for i := 1; i < 10; i++ {
-				knot_pos_old[i] = knot_pos[i]
+			for i := 1; i < knots_num; i++ {
 
-				head_pos := &knot_pos[i-1]
-				tail_pos := &knot_pos[i]
-
-				if !isTouching(*tail_pos, *head_pos) {
-					if "R" == dir {
-						tail_pos.x = head_pos.x - 1
-						tail_pos.y = head_pos.y
-					}
-					if "L" == dir {
-						tail_pos.x = head_pos.x + 1
-						tail_pos.y = head_pos.y
-
-					}
-					if "U" == dir {
-						tail_pos.x = head_pos.x
-						tail_pos.y = head_pos.y - 1
-					}
-					if "D" == dir {
-						tail_pos.x = head_pos.x
-						tail_pos.y = head_pos.y + 1
-					}
-					if "DAG" == dir {
-						knot_pos[i] = knot_pos_old[i-1]
-					}
-
-					dir = 
-				}
+				knot_pos[i] = getDirectionMoved(knot_pos[i], knot_pos[i-1])
 
 			}
-
-			visited[knot_pos[9]] = true
+			//println("____-___________")
+			visited[knot_pos[knots_num-1]] = true
 			amount_moved--
 		}
 		for i, p := range knot_pos {
@@ -98,6 +69,7 @@ func main() {
 	answer := 0
 	for _, v := range visited {
 		if v {
+			//fmt.Println(k)
 			answer++
 		}
 
@@ -111,12 +83,35 @@ type pos struct {
 
 // returns true if tree is visible
 func isTouching(tail pos, head pos) bool {
-
-	if math.Abs(float64(tail.x)-float64(head.x)) > 1 {
-		return false
-	}
-	if math.Abs(float64(tail.y)-float64(head.y)) > 1 {
+	if math.Abs(float64(tail.x)-float64(head.x)) > 1 || math.Abs(float64(tail.y)-float64(head.y)) > 1 {
 		return false
 	}
 	return true
+}
+
+func getDirectionMoved(tail, head pos) pos {
+	if isTouching(tail, head) {
+		return tail
+	}
+	change_x := float64(head.x - tail.x)
+	change_y := float64(head.y - tail.y)
+
+	if math.Abs(change_x) > 1 || math.Abs(change_x)+math.Abs(change_y) > 2 {
+
+		if change_x > 0 {
+			tail.x++
+		} else {
+			tail.x--
+		}
+
+	}
+	if math.Abs(change_y) > 1 || math.Abs(change_x)+math.Abs(change_y) > 2 {
+		if change_y > 0 {
+			tail.y++
+		} else {
+			tail.y--
+		}
+	}
+
+	return tail
 }
