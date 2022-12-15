@@ -8,7 +8,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func main() {
@@ -23,7 +22,9 @@ func main() {
 	scanner := bufio.NewScanner(f)
 	manHatDistances := make(map[pos]int)
 	beacons := make(map[pos]bool)
+	pos_to_check := make(map[pos]int)
 	max_pos := 4000000
+
 	for scanner.Scan() {
 		line := strings.Split(scanner.Text(), ",") // Split line
 		sx, _ := strconv.Atoi(line[0])
@@ -31,65 +32,49 @@ func main() {
 		bx, _ := strconv.Atoi(line[2])
 		by, _ := strconv.Atoi(line[3])
 		beacons[pos{x: bx, y: by}] = true
-		//Get manhattan distance to closest sensor
+		//Get manhatton distance to closest sensor
 		manhat := int(math.Abs(float64(sx-bx)) + math.Abs(float64(sy-by)))
 
 		manHatDistances[pos{x: sx, y: sy}] = manhat
 		//Fill in sensor range for each combination
+
 	}
 
-	//coveredPos := make(map[pos]bool)
+	//build positions to check map
+	for k, v := range manHatDistances {
+		for i := 0; i < v; i++ { //Above left
+			pos_to_check[pos{k.x - i, k.y - (v + 1) - i}] = 0
+		}
+		for i := 0; i < v; i++ { //Above right
+			pos_to_check[pos{k.x + i, k.y - (v + 1) - i}] = 0
+		}
+		for i := 0; i < v; i++ { //bellow left
+			pos_to_check[pos{k.x - i, k.y + (v + 1) - i}] = 0
+		}
+		for i := 0; i < v; i++ { //bellow right
+			pos_to_check[pos{k.x + i, k.y + (v + 1) - i}] = 0
+		}
+	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-
-	go func() {
-		findAnswer(0, 1000000, max_pos, manHatDistances)
-		defer wg.Done()
-	}()
-
-	wg.Add(1)
-
-	go func() {
-		findAnswer(1000000, 2000000, max_pos, manHatDistances)
-		defer wg.Done()
-	}()
-
-	wg.Add(1)
-
-	go func() {
-		findAnswer(2000000, 3000000, max_pos, manHatDistances)
-		defer wg.Done()
-	}()
-
-	wg.Add(1)
-
-	go func() {
-		findAnswer(3000000, 4000000, max_pos, manHatDistances)
-		defer wg.Done()
-	}()
-	wg.Wait()
-
-	//fmt.Println(len(coveredPos))
-}
-
-func findAnswer(start, end, max_pos int, manHatDistances map[pos]int) {
-	fmt.Println("Starting x from ", start, " to ", end)
-	for x := start; x <= end; x++ {
-		for y := 0; y <= max_pos; y++ {
-			isCovered := false
-			for k, v := range manHatDistances {
-				if !isCovered {
-					isCovered = k.isCovered(x, y, v)
-				}
-			}
-			if !isCovered {
-				fmt.Println("x:", x, "y:", y)
-				fmt.Println(x*4000000 + y)
+	fmt.Println("Checking")
+	///check if position is covered
+	for p, _ := range pos_to_check {
+		for k, v := range manHatDistances {
+			if k.isCovered(p.x, p.y, v) {
+				pos_to_check[p]++
 			}
 		}
 	}
+
+	fmt.Println("finding Answer")
+	for p, v := range pos_to_check {
+		if v == 0 {
+			if 0 <= p.x && p.x <= max_pos && 0 <= p.y && p.y <= max_pos {
+				fmt.Println((p.x * 4000000) + p.y) //Should be the answer
+			}
+		}
+	}
+
 }
 
 func (p pos) isCovered(x, y, distance int) bool {
