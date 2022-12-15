@@ -56,6 +56,7 @@ func main() {
 		}
 	}
 
+	println(len(pos_to_check))
 	fmt.Println("Checking")
 	///check if position is covered
 	for p, _ := range pos_to_check {
